@@ -1,0 +1,4 @@
+python-dotenv
+langchain
+langchain-google-genai
+langgraph==0.3.21
