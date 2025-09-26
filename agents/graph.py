@@ -1,38 +1,94 @@
-from agents.nodes import query_generation_node, query_validation_node, execute_query_node, result_formatting_node
+from agents.nodes import (reason_and_act_node, read_query_generation_node, read_query_validation_node, execute_query_read_node, read_result_formatting_node,
+                             create_query_generation_node, create_query_validation_node, create_human_verification_node, execute_query_create_node, create_result_formatting_node)
 from agents.states import QueryState
 from core.llm import llm
 from langgraph.graph import END, StateGraph
 
-QUERY_GENERATION_NODE="query_generation_node"
-QUERY_VALIDATION_NODE="query_validation_node"
-EXECUTE_QUERY_NODE="execute_query_node"
-RESULT_FORMATTING_NODE="result_formatting_node"
+# QUERY CLASSIFICATION
+REASON_AND_ACT_NODE = "reason_and_act_node"
+
+# READ
+QUERY_GENERATION_NODE = "query_generation_node"
+QUERY_VALIDATION_NODE = "query_validation_node"
+EXECUTE_QUERY_NODE = "execute_query_node"
+RESULT_FORMATTING_NODE = "result_formatting_node"
+
+# CREATE
+CREATE_QUERY_GENERATION_NODE = "create_query_generation_node"
+CREATE_QUERY_VALIDATION_NODE = "create_query_validation_node"
+CREATE_HUMAN_VERIFICATION_NODE = "create_human_verification_node"
+EXECUTE_QUERY_CREATE_NODE = "execute_query_create_node"
+CREATE_RESULT_FORMATTING_NODE = "create_result_formatting_node"
 
 # Define the state graph
-graph=StateGraph(QueryState)
+graph = StateGraph(QueryState)
 
 # Defining nodes
-graph.add_node(QUERY_GENERATION_NODE, query_generation_node)
-graph.set_entry_point(QUERY_GENERATION_NODE)
+graph.add_node(REASON_AND_ACT_NODE, reason_and_act_node)
+graph.set_entry_point(REASON_AND_ACT_NODE)
 
-graph.add_node(QUERY_VALIDATION_NODE, query_validation_node)
-graph.add_node(EXECUTE_QUERY_NODE, execute_query_node)
-graph.add_node(RESULT_FORMATTING_NODE, result_formatting_node)
+# -----READ-----    
+# Nodes
+graph.add_node(QUERY_GENERATION_NODE, read_query_generation_node)
+graph.add_node(QUERY_VALIDATION_NODE, read_query_validation_node)
+graph.add_node(EXECUTE_QUERY_NODE, execute_query_read_node)
+graph.add_node(RESULT_FORMATTING_NODE, read_result_formatting_node)
 
-# Defining edges
+# -----CREATE-----
+# Nodes
+graph.add_node(CREATE_QUERY_GENERATION_NODE, create_query_generation_node)
+graph.add_node(CREATE_QUERY_VALIDATION_NODE, create_query_validation_node)    
+graph.add_node(CREATE_HUMAN_VERIFICATION_NODE, create_human_verification_node)
+graph.add_node(EXECUTE_QUERY_CREATE_NODE, execute_query_create_node)
+graph.add_node(CREATE_RESULT_FORMATTING_NODE, create_result_formatting_node)
+
+# Routing functions
+def route_based_on_intent(state):
+    """Route to different nodes based on intent"""
+    intent = state.get("intent")
+    if intent == "read":
+        return QUERY_GENERATION_NODE
+    elif intent == "create":
+        return CREATE_QUERY_GENERATION_NODE
+    return END
+
+def route_human_verification(state):
+    """Route based on human verification result"""
+    human_verified = state.get("human_verified")
+    if human_verified == True:
+        return EXECUTE_QUERY_CREATE_NODE
+    elif human_verified == False:
+        return END
+    # Default case if human_verified is None or not set
+    return END
+
+# Main routing from reason_and_act_node
+graph.add_conditional_edges(REASON_AND_ACT_NODE, route_based_on_intent)
+
+# READ flow edges
 graph.add_edge(QUERY_GENERATION_NODE, QUERY_VALIDATION_NODE)
 graph.add_edge(QUERY_VALIDATION_NODE, EXECUTE_QUERY_NODE)
 graph.add_edge(EXECUTE_QUERY_NODE, RESULT_FORMATTING_NODE)
 graph.add_edge(RESULT_FORMATTING_NODE, END)
 
+# CREATE flow edges
+graph.add_edge(CREATE_QUERY_GENERATION_NODE, CREATE_QUERY_VALIDATION_NODE)
+graph.add_edge(CREATE_QUERY_VALIDATION_NODE, CREATE_HUMAN_VERIFICATION_NODE)
+graph.add_conditional_edges(CREATE_HUMAN_VERIFICATION_NODE, route_human_verification)
+graph.add_edge(EXECUTE_QUERY_CREATE_NODE, CREATE_RESULT_FORMATTING_NODE)
+graph.add_edge(CREATE_RESULT_FORMATTING_NODE, END)
+
 app = graph.compile()
 
 result = app.invoke(
     {
-        "input": "What is the product purchased by Lisa Anderson?", 
+        "input": "Add a new product called 'Echo Dot 5th Gen' in the 'Electronics' category, priced at 49.99 dollars, with 40 in stock.", 
+        "intent": None,
         "query": None, 
         "validated_query": None, 
         "results": None,
+        "answer": None,
+        "human_verified": None,
         "intermediate_steps": []
     }
 )

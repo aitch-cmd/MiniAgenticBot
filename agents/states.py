@@ -1,10 +1,12 @@
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, TypedDict, Union, Literal
 
 class QueryState(TypedDict):
-    input: str          
-    query: str | None          
-    validated_query: str | None  
-    results: str | list | None   
-    answer: str | None        
-    intermediate_steps: Annotated[list[tuple[str, str]], operator.add]  
+    input: str
+    intent: Literal["read", "create", "update", "delete"] | None
+    query: str | None
+    validated_query: str | None
+    results: str | list | None
+    answer: str | None
+    human_verified: bool | None
+    intermediate_steps: Annotated[list[tuple[str, str]], operator.add]

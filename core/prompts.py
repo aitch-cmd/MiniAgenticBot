@@ -1,6 +1,18 @@
 from langchain.prompts import PromptTemplate
 
-query_generation_prompt = PromptTemplate.from_template("""
+intent_classification_prompt = PromptTemplate.from_template("""
+Given the following user request, classify the intended database operation as one of the following:
+- "read" (query existing data)
+- "create" (add new data)
+- "update" (modify existing data)
+- "delete" (remove existing data)
+
+User request: {input}
+
+Respond only with one word: read, create, update, or delete.
+""")
+
+read_query_generation_prompt = PromptTemplate.from_template("""
 You are an expert SQL developer.
 Given the following SQLite database schema and a natural language question, generate a syntactically valid SQL query that answers the question.
 
@@ -20,7 +32,7 @@ Question: {input}
 SQL Query:
 """)
 
-query_validation_prompt = PromptTemplate.from_template("""
+read_query_validation_prompt = PromptTemplate.from_template("""
 You are a meticulous SQL validator.
 Check the provided SQL query for common mistakes, including:
 - Syntax errors
@@ -48,7 +60,7 @@ Validated and (if needed) corrected SQL Query:
 """)
 
 
-result_formatting_prompt = PromptTemplate.from_template("""
+read_result_formatting_prompt = PromptTemplate.from_template("""
 You are an assistant helping users understand database results.
 - Only use the data in {results} to answer the user's question.
 - Write your reply in clear, natural language suitable for non-technical users.
@@ -60,3 +72,66 @@ You are an assistant helping users understand database results.
 Data: {results}
 """)
 
+
+# -----CREATE-----
+create_query_generation_prompt = PromptTemplate.from_template("""
+You are an expert SQL developer.
+Given the following SQLite database schema and a natural language request, generate a syntactically valid SQL INSERT query that adds a new row into the appropriate table.
+
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+
+Instructions:
+- Only use the tables and columns that appear in the schema above.
+- Avoid making assumptions about table or column names.
+- Use only valid SQLite SQL syntax.
+- When inserting into a table, do NOT provide a value for the `id` column (it autoincrements).
+- Use realistic placeholder values if exact values are not provided in the question (e.g., `"Sample Name"`, `"sample@email.com"`, `1`, `100.0`, etc.).
+- When inserting text values (such as names, emails, categories, or statuses), ensure they are wrapped in single quotes.
+- Always provide values for all NOT NULL columns.
+
+Natural language request: {input}
+
+SQL Query:   """)
+
+
+create_query_validation_prompt = PromptTemplate.from_template("""
+You are a meticulous SQL validator.
+Check the provided SQL INSERT query for common mistakes, including:
+- Syntax errors
+- Use of non-existent columns or tables
+- Missing required NOT NULL fields
+- Attempting to insert into AUTOINCREMENT primary keys (id columns should not be manually inserted)
+- Incorrect value types for columns (e.g., string vs number)
+- SQLite dialect mismatches
+
+**If string fields (e.g., names, emails, categories, statuses) are present, ensure they are wrapped in single quotes.**  
+**If the query is missing required fields, rewrite it to include placeholders or realistic defaults (e.g., 'Sample Name', 'sample@email.com', 1, 100.0, '2025-01-01').**
+
+If you spot an issue, rewrite the query so it is valid for the schema and dialect below.  
+Do not return explanations—just the validated query.
+
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+
+Dialect: SQLite
+
+Original SQL Query:
+{query}
+
+Validated and (if needed) corrected SQL Query:
+""")
+
+create_result_formatting_prompt = PromptTemplate.from_template("""
+You are a helpful assistant. Summarize the result of this database operation for the user:
+- If a new item was created, clearly state what was added and include all relevant details from {results}.
+- If the operation was not successful, provide a friendly, plain-language explanation of the error.
+- Do not mention SQL, technical steps, or system details.
+- Make your reply natural, brief, and easy for a non-technical user to understand.
+
+Data: {results}
+""")
