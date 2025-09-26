@@ -202,5 +202,67 @@ You are a helpful assistant. Summarize the result of this database UPDATE operat
 Data: {results}
 """)
 
+# ----DELETE-----
+delete_query_generation_prompt = PromptTemplate.from_template("""
+You are an expert SQL developer.
+Given the following SQLite database schema and a natural language request, generate a syntactically valid SQL DELETE query to remove data from the appropriate table.
 
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
 
+Instructions:
+- Only use the tables and columns listed in the schema above.
+- Avoid making assumptions about table or column names.
+- Use valid SQLite SQL syntax.
+- **Always include a WHERE clause to specify which rows should be deleted. Never delete all rows unless the request is explicit.**
+- Use realistic placeholder values (e.g., `'Sample Name'`, `'sample@email.com'`, `100.0`, etc.) if exact values are not specified in the request.
+- When deleting based on text fields (such as names, emails, categories, or statuses), wrap values in single quotes.
+- **Never attempt to delete the primary key column or all IDs explicitly.**
+- When comparing text fields (such as names or emails), always make the comparison case-insensitive by using COLLATE NOCASE or by applying the LOWER() function to both sides of the comparison. This ensures user queries work regardless of capitalization.
+- The output should be a single DELETE SQL statement and nothing else.
+
+Natural language request: {input}
+
+SQL Query:
+""")
+
+delete_query_validation_prompt = PromptTemplate.from_template("""
+You are a meticulous SQL validator.
+Check the provided SQL DELETE query for common mistakes, including:
+- Syntax errors
+- Use of non-existent columns or tables
+- Attempting to delete rows based on non-existent or inappropriate criteria
+- Incorrect value types in WHERE conditions (e.g., string vs number)
+- SQLite dialect mismatches
+
+**If string fields (e.g., names, emails, categories, statuses) are present in the WHERE clause, ensure they are wrapped in single quotes.**
+**If the query is missing required conditions to uniquely identify which rows to delete, rewrite it to include a proper WHERE clause with realistic placeholder values (e.g., 'Sample Name', 'sample@email.com', 100.0, '2025-01-01').**
+**Ensure the query always includes a WHERE clause to target specific rows for deletion (never delete all rows unless explicitly requested).**
+**Never attempt to delete the AUTOINCREMENT primary key column or all IDs explicitly.**
+
+If you spot an issue, rewrite the query so it is valid for the schema and dialect below.
+Do not return explanations—just the validated query.
+
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+
+Dialect: SQLite
+
+Original SQL Query:
+{query}
+
+Validated and (if needed) corrected SQL Query:
+""")
+
+delete_result_formatting_prompt = PromptTemplate.from_template("""
+You are a helpful assistant. Summarize the result of this database DELETE operation for the user:
+- If the deletion was successful, clearly state what was removed, mentioning the type of items and the number of deleted records if possible (based on {results}).
+- If the operation was not successful, provide a friendly, plain-language explanation of the error.
+- Do not mention SQL, technical steps, or system details in your response.
+- Make your reply natural, brief, and easy for a non-technical user to understand.
+
+Data: {results} """)
