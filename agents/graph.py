@@ -1,6 +1,7 @@
 from .nodes.react import reason_and_act_node
 from .nodes.read import read_query_generation_node, read_query_validation_node, execute_query_read_node, read_result_formatting_node
 from .nodes.create import create_query_generation_node, create_query_validation_node, create_human_verification_node, execute_query_create_node, create_result_formatting_node
+from .nodes.update import update_query_generation_node, update_query_validation_node, update_human_verification_node, execute_query_update_node, update_result_formatting_node
 from agents.states import QueryState
 from core.llm import llm
 from langgraph.graph import END, StateGraph
@@ -21,6 +22,13 @@ CREATE_HUMAN_VERIFICATION_NODE = "create_human_verification_node"
 EXECUTE_QUERY_CREATE_NODE = "execute_query_create_node"
 CREATE_RESULT_FORMATTING_NODE = "create_result_formatting_node"
 
+# UPDATE
+UPDATE_QUERY_GENERATION_NODE = "update_query_generation_node"
+UPDATE_QUERY_VALIDATION_NODE = "update_query_validation_node"
+UPDATE_HUMAN_VERIFICATION_NODE = "update_human_verification_node"
+EXECUTE_QUERY_UPDATE_NODE = "execute_query_update_node"
+UPDATE_RESULT_FORMATTING_NODE = "update_result_formatting_node"
+
 # Define the state graph
 graph = StateGraph(QueryState)
 
@@ -28,20 +36,26 @@ graph = StateGraph(QueryState)
 graph.add_node(REASON_AND_ACT_NODE, reason_and_act_node)
 graph.set_entry_point(REASON_AND_ACT_NODE)
 
-# -----READ-----    
+# -----READ Nodes-----    
 # Nodes
 graph.add_node(QUERY_GENERATION_NODE, read_query_generation_node)
 graph.add_node(QUERY_VALIDATION_NODE, read_query_validation_node)
 graph.add_node(EXECUTE_QUERY_NODE, execute_query_read_node)
 graph.add_node(RESULT_FORMATTING_NODE, read_result_formatting_node)
 
-# -----CREATE-----
-# Nodes
+# -----CREATE Nodes-----
 graph.add_node(CREATE_QUERY_GENERATION_NODE, create_query_generation_node)
 graph.add_node(CREATE_QUERY_VALIDATION_NODE, create_query_validation_node)    
 graph.add_node(CREATE_HUMAN_VERIFICATION_NODE, create_human_verification_node)
 graph.add_node(EXECUTE_QUERY_CREATE_NODE, execute_query_create_node)
 graph.add_node(CREATE_RESULT_FORMATTING_NODE, create_result_formatting_node)
+
+# -----UPDATE Nodes-----
+graph.add_node(UPDATE_QUERY_GENERATION_NODE, update_query_generation_node)
+graph.add_node(UPDATE_QUERY_VALIDATION_NODE, update_query_validation_node)
+graph.add_node(UPDATE_HUMAN_VERIFICATION_NODE, update_human_verification_node)
+graph.add_node(EXECUTE_QUERY_UPDATE_NODE, execute_query_update_node)
+graph.add_node(UPDATE_RESULT_FORMATTING_NODE, update_result_formatting_node)
 
 # Routing functions
 def route_based_on_intent(state):
@@ -51,6 +65,8 @@ def route_based_on_intent(state):
         return QUERY_GENERATION_NODE
     elif intent == "create":
         return CREATE_QUERY_GENERATION_NODE
+    elif intent == "update":
+        return UPDATE_QUERY_GENERATION_NODE
     return END
 
 def route_human_verification(state):
@@ -60,7 +76,6 @@ def route_human_verification(state):
         return EXECUTE_QUERY_CREATE_NODE
     elif human_verified == False:
         return END
-    # Default case if human_verified is None or not set
     return END
 
 # Main routing from reason_and_act_node
@@ -79,11 +94,18 @@ graph.add_conditional_edges(CREATE_HUMAN_VERIFICATION_NODE, route_human_verifica
 graph.add_edge(EXECUTE_QUERY_CREATE_NODE, CREATE_RESULT_FORMATTING_NODE)
 graph.add_edge(CREATE_RESULT_FORMATTING_NODE, END)
 
+# Update flow edges
+graph.add_edge(UPDATE_QUERY_GENERATION_NODE, UPDATE_QUERY_VALIDATION_NODE)
+graph.add_edge(UPDATE_QUERY_VALIDATION_NODE, UPDATE_HUMAN_VERIFICATION_NODE)
+graph.add_conditional_edges(UPDATE_HUMAN_VERIFICATION_NODE, route_human_verification)
+graph.add_edge(EXECUTE_QUERY_UPDATE_NODE, UPDATE_RESULT_FORMATTING_NODE)
+graph.add_edge(UPDATE_RESULT_FORMATTING_NODE, END)
+
 app = graph.compile()
 
 result = app.invoke(
     {
-        "input": "Add a new product called 'Echo Dot 5th Gen' in the 'Electronics' category, priced at 49.99 dollars, with 40 in stock.", 
+        "input": "In the products, update the Iphone 15 pro name to Iphone 17", 
         "intent": None,
         "query": None, 
         "validated_query": None, 

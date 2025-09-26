@@ -135,3 +135,72 @@ You are a helpful assistant. Summarize the result of this database operation for
 
 Data: {results}
 """)
+
+#----UPDATE-----
+update_query_generation_prompt = PromptTemplate.from_template("""
+You are an expert SQL developer.
+Given the following SQLite database schema and a natural language request, generate a syntactically valid SQL UPDATE query to modify existing data in the appropriate table.
+
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+
+Instructions:
+- Only use the tables and columns listed in the schema above.
+- Avoid making assumptions about table or column names.
+- Use valid SQLite SQL syntax.
+- Include a WHERE clause to specify which rows should be updated. Never update all rows unless the request is explicit.
+- Use realistic placeholder values if exact new values are not specified in the request (e.g., `'Sample Name'`, `'sample@email.com'`, `100.0`, etc.).
+- When updating text fields (such as names, emails, categories, statuses), wrap values in single quotes.
+- Do not update the `id` column or any PRIMARY KEY columns.
+                                                              
+**When comparing text fields (such as names or emails), always make the comparison case-insensitive by using COLLATE NOCASE or by applying the LOWER() function to both sides of the comparison.** This ensures user queries work regardless of capitalization.                                                        
+
+Natural language request: {input}
+
+SQL Query:
+""")
+
+update_query_validation_prompt = PromptTemplate.from_template("""
+You are a meticulous SQL validator.
+Check the provided SQL UPDATE query for common mistakes, including:
+- Syntax errors
+- Use of non-existent columns or tables
+- Missing required NOT NULL fields in SET clause if applicable
+- Attempting to update AUTOINCREMENT primary keys (id columns should not be manually updated)
+- Incorrect value types for columns (e.g., string vs number)
+- SQLite dialect mismatches
+
+**If string fields (e.g., names, emails, categories, statuses) are present, ensure they are wrapped in single quotes.**
+**If the query is missing updated values, rewrite it to include realistic values or placeholders (e.g., 'Sample Name', 'sample@email.com', 100.0, '2025-01-01').**
+**Ensure the query always includes a WHERE clause so only specific rows are updated (never update all rows unless explicitly requested).**
+
+If you spot an issue, rewrite the query so it is valid for the schema and dialect below.
+Do not return explanations—just the validated query.
+
+Schema:
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+
+Dialect: SQLite
+
+Original SQL Query:
+{query}
+
+Validated and (if needed) corrected SQL Query:
+""")
+
+update_result_formatting_prompt = PromptTemplate.from_template("""
+You are a helpful assistant. Summarize the result of this database UPDATE operation for the user:
+- If the update was successful, clearly state what was changed or updated, mentioning the updated fields and the number of affected items if possible (based on {results}).
+- If the operation was not successful, provide a friendly, plain-language explanation of the error.
+- Do not mention SQL, technical steps, or system details in your response.
+- Make your reply natural, brief, and easy for a non-technical user to understand.
+
+Data: {results}
+""")
+
+
+
