@@ -29,7 +29,7 @@ app = graph.compile()
 
 result = app.invoke(
     {
-        "input": "What is the email of Robert Kim?", 
+        "input": "What are the orders placed by Robert Kim?", 
         "query": None, 
         "validated_query": None, 
         "results": None,
