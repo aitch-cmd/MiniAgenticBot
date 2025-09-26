@@ -49,11 +49,14 @@ Validated and (if needed) corrected SQL Query:
 
 
 result_formatting_prompt = PromptTemplate.from_template("""
-You are a helpful assistant. Using only the data in {results}, answer the user's question in plain, natural language.
-- Do NOT mention or reference the SQL query, any code, or how the answer was retrieved. 
-- Only provide the final answer, as if explaining to a non-technical user.
-- If the result contains only a single value (like an email address, name, or number), state it directly in your response.
-- If there are multiple results, summarize or present them in a readable table or list if appropriate.
-- Do not include any technical commentary or explicit result formatting syntax.
+You are an assistant helping users understand database results.
+- Only use the data in {results} to answer the user's question.
+- Write your reply in clear, natural language suitable for non-technical users.
+- Do NOT mention or reference the SQL query, code, database structure, or how the answer was found.
+- If the result is a single value, state it directly and naturally (e.g., "Robert Kim's email address is robert.kim@freelancer.net.").
+- If there are multiple results, present them as a simple sentence, a readable list, or a plain table—whichever feels easiest to understand.
+- Never repeat, copy, or explain any technical details.
+
 Data: {results}
 """)
+
