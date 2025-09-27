@@ -87,14 +87,17 @@ Instructions:
 - Only use the tables and columns that appear in the schema above.
 - Avoid making assumptions about table or column names.
 - Use only valid SQLite SQL syntax.
-- When inserting into a table, do NOT provide a value for the `id` column (it autoincrements).
-- Use realistic placeholder values if exact values are not provided in the question (e.g., `"Sample Name"`, `"sample@email.com"`, `1`, `100.0`, etc.).
+- When inserting into a table, do NOT provide a value for the id column (it autoincrements).
+- Use realistic placeholder values if exact values are not provided in the question (e.g., 'Sample Name', 'sample@email.com', 1, 100.0, etc.).
 - When inserting text values (such as names, emails, categories, or statuses), ensure they are wrapped in single quotes.
 - Always provide values for all NOT NULL columns.
+- The output should be a single INSERT SQL statement and nothing else.
+- If the user's request does not provide enough information to generate a valid INSERT query, do not make assumptions or fill in missing details. Instead, respond only with: "Not enough information to generate query. Please specify the table and values for all NOT NULL columns."
 
 Natural language request: {input}
 
-SQL Query:   """)
+SQL Query:
+""")
 
 
 create_query_validation_prompt = PromptTemplate.from_template("""
@@ -151,11 +154,12 @@ Instructions:
 - Avoid making assumptions about table or column names.
 - Use valid SQLite SQL syntax.
 - Include a WHERE clause to specify which rows should be updated. Never update all rows unless the request is explicit.
-- Use realistic placeholder values if exact new values are not specified in the request (e.g., `'Sample Name'`, `'sample@email.com'`, `100.0`, etc.).
+- Use realistic placeholder values if exact new values are not specified in the request (e.g., 'Sample Name', 'sample@email.com', 100.0, etc.).
 - When updating text fields (such as names, emails, categories, statuses), wrap values in single quotes.
-- Do not update the `id` column or any PRIMARY KEY columns.
-                                                              
-**When comparing text fields (such as names or emails), always make the comparison case-insensitive by using COLLATE NOCASE or by applying the LOWER() function to both sides of the comparison.** This ensures user queries work regardless of capitalization.                                                        
+- Do not update the id column or any PRIMARY KEY columns.
+- When comparing text fields (such as names or emails), always make the comparison case-insensitive by using COLLATE NOCASE or by applying the LOWER() function to both sides of the comparison. This ensures user queries work regardless of capitalization.
+- The output should be a single UPDATE SQL statement and nothing else.
+- If the user's request does not provide enough information to generate a valid UPDATE query, do not make assumptions or fill in missing details. Instead, respond only with: "Not enough information to generate query. Please specify which table, at least one condition to identify rows, and the new value(s) to update."
 
 Natural language request: {input}
 
@@ -216,17 +220,19 @@ Instructions:
 - Only use the tables and columns listed in the schema above.
 - Avoid making assumptions about table or column names.
 - Use valid SQLite SQL syntax.
-- **Always include a WHERE clause to specify which rows should be deleted. Never delete all rows unless the request is explicit.**
-- Use realistic placeholder values (e.g., `'Sample Name'`, `'sample@email.com'`, `100.0`, etc.) if exact values are not specified in the request.
+- Always include a WHERE clause to specify which rows should be deleted. Never delete all rows unless the request is explicit.
+- Use realistic placeholder values (e.g., 'Sample Name', 'sample@email.com', 100.0, etc.) if exact values are not specified in the request.
 - When deleting based on text fields (such as names, emails, categories, or statuses), wrap values in single quotes.
-- **Never attempt to delete the primary key column or all IDs explicitly.**
+- Never attempt to delete the primary key column or all IDs explicitly.
 - When comparing text fields (such as names or emails), always make the comparison case-insensitive by using COLLATE NOCASE or by applying the LOWER() function to both sides of the comparison. This ensures user queries work regardless of capitalization.
 - The output should be a single DELETE SQL statement and nothing else.
+- If the user's request does not provide enough information to generate a valid DELETE query, do not make assumptions or fill in missing details. Instead, respond only with: "Not enough information to generate query. Please specify which table and at least one condition to identify the rows to delete."
 
 Natural language request: {input}
 
 SQL Query:
 """)
+
 
 delete_query_validation_prompt = PromptTemplate.from_template("""
 You are a meticulous SQL validator.

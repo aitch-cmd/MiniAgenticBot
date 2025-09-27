@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentic CRUD Database Bot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.bot {
+            text-align: left;
+        }
+
+        .message-content {
+            display: inline-block;
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .message.bot .message-content {
+            background: rgba(55, 65, 81, 0.8);
+            color: #f3f4f6;
+            border-bottom-left-radius: 5px;
+            border: 1px solid rgba(75, 85, 99, 0.6);
+            backdrop-filter: blur(10px);
+        }
+
+        .verification-panel {
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(249, 115, 22, 0.2) 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            animation: slideIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        .verification-panel h3 {
+            color: #fbbf24;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .verification-panel h3::before {
+            content: "⚠️";
+            font-size: 20px;
+        }
+
+        .sql-query {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            border-left: 4px solid #6366f1;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .verification-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-approve {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-reject {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: rgba(30, 30, 46, 0.95);
+            border-top: 1px solid rgba(75, 85, 99, 0.6);
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid rgba(75, 85, 99, 0.6);
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(55, 65, 81, 0.8);
+            color: #f3f4f6;
+        }
+
+        .chat-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(55, 65, 81, 1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .send-btn:disabled {
+            background: #374151;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6366f1;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .error-message {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-left: 4px solid #ef4444;
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .success-message {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            border-left: 4px solid #22c55e;
+            color: #86efac;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Scrollbar styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+                margin: 10px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .verification-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-indicator"></div>
+            <h1>🤖 Agentic CRUD Database Bot</h1>
+            <p>Natural Language Database Operations with Smart Verification</p>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    Welcome! I can help you perform database operations using natural language. Try asking me to:
+                    <br><br>
+                    📖 <strong>Read:</strong> "Show me all users" or "Find users older than 25"
+                    <br>
+                    ➕ <strong>Create:</strong> "Add a new user named John with email john@example.com"
+                    <br>
+                    ✏️ <strong>Update:</strong> "Update user John's email to newemail@example.com"
+                    <br>
+                    🗑️ <strong>Delete:</strong> "Delete user with ID 5"
+                    <br><br>
+                    For Create, Update, and Delete operations, I'll ask for your approval before executing!
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <form class="chat-input-form" id="chatForm">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="userInput" 
+                    placeholder="Type your database operation here..."
+                    autocomplete="off"
+                >
+                <button type="submit" class="send-btn" id="sendBtn">
+                    ➤
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        class AgenticCRUDBot {
+            constructor() {
+                this.chatMessages = document.getElementById('chatMessages');
+                this.userInput = document.getElementById('userInput');
+                this.sendBtn = document.getElementById('sendBtn');
+                this.chatForm = document.getElementById('chatForm');
+                
+                this.currentState = {
+                    input: '',
+                    intent: null,
+                    query: null,
+                    validated_query: null,
+                    results: null,
+                    answer: null,
+                    human_verified: null,
+                    intermediate_steps: []
+                };
+                
+                this.initializeEventListeners();
+            }
+            
+            initializeEventListeners() {
+                this.chatForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handleUserInput();
+                });
+                
+                this.userInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.handleUserInput();
+                    }
+                });
+            }
+            
+            async handleUserInput() {
+                const input = this.userInput.value.trim();
+                if (!input || this.sendBtn.disabled) return;
+                
+                this.addMessage(input, 'user');
+                this.userInput.value = '';
+                this.setLoading(true);
+                
+                try {
+                    await this.processUserInput(input);
+                } catch (error) {
+                    this.addErrorMessage('Something went wrong. Please try again.');
+                    console.error('Error:', error);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            async processUserInput(input) {
+                // Reset state
+                this.currentState = {
+                    input: input,
+                    intent: null,
+                    query: null,
+                    validated_query: null,
+                    results: null,
+                    answer: null,
+                    human_verified: null,
+                    intermediate_steps: []
+                };
+                
+                // Step 1: Intent Classification (Reason and Act)
+                await this.reasonAndAct();
+                
+                // Step 2: Route based on intent
+                await this.routeBasedOnIntent();
+            }
+            
+            async reasonAndAct() {
+                this.addMessage('🤔 Analyzing your request...', 'bot');
+                
+                // Simulate intent classification
+                const intent = this.classifyIntent(this.currentState.input);
+                this.currentState.intent = intent;
+                this.currentState.intermediate_steps.push(['intent_classification', intent]);
+                
+                await this.sleep(800);
+                this.addMessage(`✅ Detected operation: <strong>${intent.toUpperCase()}</strong>`, 'bot');
+            }
+            
+            classifyIntent(input) {
+                const lowerInput = input.toLowerCase();
+                
+                if (lowerInput.includes('show') || lowerInput.includes('find') || 
+                    lowerInput.includes('get') || lowerInput.includes('list') || 
+                    lowerInput.includes('select') || lowerInput.includes('search')) {
+                    return 'read';
+                }
+                
+                if (lowerInput.includes('add') || lowerInput.includes('insert') || 
+                    lowerInput.includes('create') || lowerInput.includes('new')) {
+                    return 'create';
+                }
+                
+                if (lowerInput.includes('update') || lowerInput.includes('modify') || 
+                    lowerInput.includes('change') || lowerInput.includes('edit')) {
+                    return 'update';
+                }
+                
+                if (lowerInput.includes('delete') || lowerInput.includes('remove') || 
+                    lowerInput.includes('drop')) {
+                    return 'delete';
+                }
+                
+                return 'read'; // Default to read
+            }
+            
+            async routeBasedOnIntent() {
+                const intent = this.currentState.intent;
+                
+                switch (intent) {
+                    case 'read':
+                        await this.handleReadOperation();
+                        break;
+                    case 'create':
+                        await this.handleCreateOperation();
+                        break;
+                    case 'update':
+                        await this.handleUpdateOperation();
+                        break;
+                    case 'delete':
+                        await this.handleDeleteOperation();
+                        break;
+                    default:
+                        this.addErrorMessage('Unable to determine operation type.');
+                }
+            }
+            
+            async handleReadOperation() {
+                // Read operations don't need human verification
+                await this.generateQuery('read');
+                await this.validateQuery('read');
+                await this.executeQuery('read');
+                await this.formatResults('read');
+            }
+            
+            async handleCreateOperation() {
+                await this.generateQuery('create');
+                await this.validateQuery('create');
+                const approved = await this.requestHumanVerification('CREATE');
+                
+                if (approved) {
+                    this.currentState.human_verified = true;
+                    await this.executeQuery('create');
+                    await this.formatResults('create');
+                } else {
+                    this.currentState.human_verified = false;
+                    this.currentState.results = 'Create operation was not approved.';
+                    await this.formatResults('create');
+                }
+            }
+            
+            async handleUpdateOperation() {
+                await this.generateQuery('update');
+                await this.validateQuery('update');
+                const approved = await this.requestHumanVerification('UPDATE');
+                
+                if (approved) {
+                    this.currentState.human_verified = true;
+                    await this.executeQuery('update');
+                    await this.formatResults('update');
+                } else {
+                    this.currentState.human_verified = false;
+                    this.currentState.results = 'Update operation was not approved.';
+                    await this.formatResults('update');
+                }
+            }
+            
+            async handleDeleteOperation() {
+                await this.generateQuery('delete');
+                await this.validateQuery('delete');
+                const approved = await this.requestHumanVerification('DELETE');
+                
+                if (approved) {
+                    this.currentState.human_verified = true;
+                    await this.executeQuery('delete');
+                    await this.formatResults('delete');
+                } else {
+                    this.currentState.human_verified = false;
+                    this.currentState.results = 'Delete operation was not approved.';
+                    await this.formatResults('delete');
+                }
+            }
+            
+            async generateQuery(operation) {
+                this.addMessage(`🔧 Generating ${operation.toUpperCase()} query...`, 'bot');
+                await this.sleep(1000);
+                
+                // Mock query generation based on input
+                const query = this.mockQueryGeneration(this.currentState.input, operation);
+                this.currentState.query = query;
+                this.currentState.intermediate_steps.push([`${operation}_query_generation`, query]);
+                
+                this.addMessage(`✅ Query generated successfully`, 'bot');
+            }
+            
+            async validateQuery(operation) {
+                this.addMessage(`🔍 Validating ${operation.toUpperCase()} query...`, 'bot');
+                await this.sleep(800);
+                
+                // Mock query validation
+                const validatedQuery = this.currentState.query; // In real app, this would be validated
+                this.currentState.validated_query = validatedQuery;
+                this.currentState.intermediate_steps.push([`${operation}_query_validation`, validatedQuery]);
+                
+                this.addMessage(`✅ Query validated successfully`, 'bot');
+            }
+            
+            async requestHumanVerification(operation) {
+                return new Promise((resolve) => {
+                    const verificationPanel = document.createElement('div');
+                    verificationPanel.className = 'verification-panel';
+                    
+                    verificationPanel.innerHTML = `
+                        <h3>Human Verification Required</h3>
+                        <p>Do you approve the following <strong>${operation}</strong> operation?</p>
+                        <div class="sql-query">${this.currentState.validated_query}</div>
+                        <p><strong>⚠️ Warning:</strong> This operation will modify your database. Please review carefully.</p>
+                        <div class="verification-buttons">
+                            <button class="btn btn-approve" id="approveBtn">
+                                ✅ Approve & Execute
+                            </button>
+                            <button class="btn btn-reject" id="rejectBtn">
+                                ❌ Reject Operation
+                            </button>
+                        </div>
+                    `;
+                    
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message bot';
+                    messageDiv.appendChild(verificationPanel);
+                    
+                    this.chatMessages.appendChild(messageDiv);
+                    this.scrollToBottom();
+                    
+                    const approveBtn = verificationPanel.querySelector('#approveBtn');
+                    const rejectBtn = verificationPanel.querySelector('#rejectBtn');
+                    
+                    approveBtn.addEventListener('click', () => {
+                        verificationPanel.innerHTML = `
+                            <div class="success-message">
+                                ✅ <strong>Operation Approved</strong> - Executing ${operation} query...
+                            </div>
+                        `;
+                        this.currentState.intermediate_steps.push(['human_verification', 'true']);
+                        resolve(true);
+                    });
+                    
+                    rejectBtn.addEventListener('click', () => {
+                        verificationPanel.innerHTML = `
+                            <div class="error-message">
+                                ❌ <strong>Operation Rejected</strong> - ${operation} operation cancelled by user.
+                            </div>
+                        `;
+                        this.currentState.intermediate_steps.push(['human_verification', 'false']);
+                        resolve(false);
+                    });
+                });
+            }
+            
+            async executeQuery(operation) {
+                this.addMessage(`⚡ Executing ${operation.toUpperCase()} operation...`, 'bot');
+                await this.sleep(1200);
+                
+                // Mock query execution
+                let results;
+                if (!this.currentState.human_verified && operation !== 'read') {
+                    results = `${operation.charAt(0).toUpperCase() + operation.slice(1)} operation was not approved.`;
+                } else {
+                    results = this.mockQueryExecution(operation);
+                }
+                
+                this.currentState.results = results;
+                this.currentState.intermediate_steps.push([`execute_${operation}`, results]);
+                
+                this.addMessage(`✅ ${operation.toUpperCase()} operation completed`, 'bot');
+            }
+            
+            async formatResults(operation) {
+                this.addMessage(`📝 Formatting results...`, 'bot');
+                await this.sleep(600);
+                
+                // Mock result formatting
+                const formattedAnswer = this.mockResultFormatting(this.currentState.results, operation);
+                this.currentState.answer = formattedAnswer;
+                this.currentState.intermediate_steps.push(['result_formatting', formattedAnswer]);
+                
+                // Display final answer
+                this.addMessage(formattedAnswer, 'bot');
+            }
+            
+            mockQueryGeneration(input, operation) {
+                const queries = {
+                    read: `SELECT * FROM users WHERE name LIKE '%${input.split(' ')[2] || 'user'}%' LIMIT 10;`,
+                    create: `INSERT INTO users (name, email) VALUES ('${input.split(' ')[4] || 'John'}', '${input.split(' ')[7] || 'john@example.com'}');`,
+                    update: `UPDATE users SET email = '${input.split(' ')[6] || 'new@example.com'}' WHERE name = '${input.split(' ')[2] || 'John'}';`,
+                    delete: `DELETE FROM users WHERE id = ${input.split(' ')[4] || '1'};`
+                };
+                return queries[operation] || 'SELECT 1;';
+            }
+            
+            mockQueryExecution(operation) {
+                const results = {
+                    read: [['1', 'John Doe', 'john@example.com'], ['2', 'Jane Smith', 'jane@example.com']],
+                    create: 'Row inserted successfully.',
+                    update: 'Row(s) updated successfully. (1 affected)',
+                    delete: 'Row(s) deleted successfully. (1 affected)'
+                };
+                return results[operation] || 'Operation completed.';
+            }
+            
+            mockResultFormatting(results, operation) {
+                if (operation === 'read' && Array.isArray(results)) {
+                    return `Found ${results.length} matching records:\n\n` + 
+                           results.map((row, i) => `${i + 1}. ID: ${row[0]}, Name: ${row[1]}, Email: ${row[2]}`).join('\n');
+                }
+                return `${operation.charAt(0).toUpperCase() + operation.slice(1)} operation completed successfully!\n\nResult: ${results}`;
+            }
+            
+            addMessage(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = content;
+                
+                messageDiv.appendChild(contentDiv);
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            addErrorMessage(message) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message bot';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.innerHTML = `<div class="error-message">❌ ${message}</div>`;
+                
+                messageDiv.appendChild(contentDiv);
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            setLoading(loading) {
+                this.sendBtn.disabled = loading;
+                this.userInput.disabled = loading;
+                
+                if (loading) {
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'message bot';
+                    loadingDiv.id = 'loadingMessage';
+                    
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'message-content loading';
+                    contentDiv.innerHTML = `
+                        Processing your request
+                        <div class="loading-dots">
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                            <div class="loading-dot"></div>
+                        </div>
+                    `;
+                    
+                    loadingDiv.appendChild(contentDiv);
+                    this.chatMessages.appendChild(loadingDiv);
+                    this.scrollToBottom();
+                } else {
+                    const loadingMessage = document.getElementById('loadingMessage');
+                    if (loadingMessage) {
+                        loadingMessage.remove();
+                    }
+                }
+            }
+            
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                }, 100);
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+        
+        // Initialize the bot when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AgenticCRUDBot();
+        });
+    </script>
+</body>
+</html>
