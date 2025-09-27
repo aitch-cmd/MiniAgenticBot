@@ -146,15 +146,15 @@ class AgenticCRUDApp:
         result = self.app.invoke(state)
         return result
     
-    # def main(self):
-    #     while True:
-    #         user_input = input("Enter your database operation (or 'exit' to quit): ")
-    #         if user_input.lower() == 'exit':
-    #             break
-    #         result = self.run_agent(user_input)
-    #         print("Final Answer:", result.get("answer"))
-    #         print("Validated Query:", result.get("validated_query"))
+    def main(self):
+        while True:
+            user_input = input("Enter your database operation (or 'exit' to quit): ")
+            if user_input.lower() == 'exit':
+                break
+            result = self.run_agent(user_input)
+            print("Final Answer:", result.get("answer"))
+            print("Validated Query:", result.get("validated_query"))
 
-# if __name__ == "__main__":
-#     agent_app = AgenticCRUDApp()
-#     agent_app.main()
+if __name__ == "__main__":
+    agent_app = AgenticCRUDApp()
+    agent_app.main()

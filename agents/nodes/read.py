@@ -29,7 +29,8 @@ def read_query_generation_node(state: QueryState) -> QueryState:
 
 def read_query_validation_node(state: QueryState) -> QueryState:
     query = state.get('query')
-    validated_query_obj = llm.invoke(read_query_validation_prompt.format(query=query))
+    input_text = state.get('input')
+    validated_query_obj = llm.invoke(read_query_validation_prompt.format(input=input_text, query=query))
     # Extract raw string
     validated_query = (
         validated_query_obj.content if hasattr(validated_query_obj, "content") else validated_query_obj

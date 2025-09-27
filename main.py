@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import Optional
 from agents.graph import AgenticCRUDApp
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Agentic CRUD API",
@@ -11,6 +12,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 crud_agent = AgenticCRUDApp()
 
 # Templates folder setup

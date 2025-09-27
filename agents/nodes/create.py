@@ -16,7 +16,8 @@ def create_query_generation_node(state: QueryState) -> QueryState:
 
 def create_query_validation_node(state: QueryState) -> QueryState:
     query = state.get("query")
-    validated_query = llm.invoke(create_query_validation_prompt.format(query=query))
+    input_text = state.get('input')
+    validated_query = llm.invoke(create_query_validation_prompt.format(input=input_text, query=query))
     validated_query_str = validated_query.content if hasattr(validated_query, 'content') else str(validated_query)
     state["validated_query"] = validated_query_str
     intermediate = state.get("intermediate_steps", [])
