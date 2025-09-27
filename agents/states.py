@@ -10,3 +10,5 @@ class QueryState(TypedDict):
     answer: str | None
     human_verified: bool | None
     intermediate_steps: Annotated[list[tuple[str, str]], operator.add]
+    last_inserted_id: int | None
+    last_inserted_table: str | None
