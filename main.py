@@ -1,10 +1,8 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 from agents.graph import AgenticCRUDApp
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Agentic CRUD API",
@@ -14,27 +12,20 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_origins=[
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 crud_agent = AgenticCRUDApp()
 
-# Templates folder setup
-templates = Jinja2Templates(directory="templates")
-
-# Request schema
 class QueryRequest(BaseModel):
     input: str
     human_verified: Optional[bool] = None
 
-# Serve UI
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-# API endpoint
 @app.post("/query")
 async def query(request: QueryRequest):
     result = crud_agent.run_agent({

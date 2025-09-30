@@ -60,8 +60,12 @@
             width: 14px;
             height: 14px;
             border-radius: 50%;
-            background: #10b981;
+            background: #6b7280;
             animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #10b981;
         }
 
         .status-indicator.disconnected {
@@ -331,22 +335,21 @@
             font-size: 16px;
         }
 
-        /* Scrollbar styling */
         .chat-messages::-webkit-scrollbar {
             width: 8px;
         }
 
         .chat-messages::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: #1e1e2e;
         }
 
         .chat-messages::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: #4b5563;
             border-radius: 4px;
         }
 
         .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
+            background: #6b7280;
         }
 
         @media (max-width: 768px) {
@@ -429,26 +432,8 @@
                 this.sendBtn = document.getElementById('sendBtn');
                 this.chatForm = document.getElementById('chatForm');
                 this.statusIndicator = document.getElementById('statusIndicator');
-                this.apiBaseUrl = 'http://localhost:8000'; // Change this to your backend URL
-                
+                this.apiBaseUrl = 'http://localhost:8000/query';
                 this.initializeEventListeners();
-                this.checkBackendConnection();
-            }
-            
-            async checkBackendConnection() {
-                try {
-                    // Try to ping the backend
-                    const response = await fetch(`${this.apiBaseUrl}/`, { method: 'HEAD' });
-                    if (response.ok) {
-                        this.statusIndicator.classList.remove('disconnected');
-                        this.addMessage('✅ Connected to backend server', 'bot');
-                    } else {
-                        throw new Error('Backend not responding');
-                    }
-                } catch (error) {
-                    this.statusIndicator.classList.add('disconnected');
-                    this.addErrorMessage('⚠️ Backend server not connected. Using demo mode. Start your FastAPI server to use real database operations.');
-                }
             }
             
             initializeEventListeners() {
@@ -476,7 +461,9 @@
                 try {
                     await this.processUserInput(input);
                 } catch (error) {
-                    this.addErrorMessage('Failed to connect to the backend server. Please make sure your FastAPI server is running on ' + this.apiBaseUrl);
+                    this.statusIndicator.classList.add('disconnected');
+                    this.statusIndicator.classList.remove('connected');
+                    this.addErrorMessage('Failed to connect to the backend server. Please make sure your FastAPI server is running on http://localhost:8000');
                     console.error('Error:', error);
                 } finally {
                     this.setLoading(false);
@@ -485,8 +472,7 @@
             
             async processUserInput(input) {
                 try {
-                    // Send query to backend
-                    const response = await fetch(`${this.apiBaseUrl}/query`, {
+                    const response = await fetch(this.apiBaseUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -498,24 +484,14 @@
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     
+                    this.statusIndicator.classList.add('connected');
+                    this.statusIndicator.classList.remove('disconnected');
+                    
                     const result = await response.json();
                     
                     if (result.status === 'verification_required') {
-                        // CUD operation - show verification panel
-                        this.addMessage(`🤔 Analyzed your request...`, 'bot');
-                        this.addMessage(`✅ Detected operation: <strong>${result.intent.toUpperCase()}</strong>`, 'bot');
-                        this.addMessage(`🔧 Generated ${result.intent.toUpperCase()} query...`, 'bot');
-                        this.addMessage(`🔍 Validated ${result.intent.toUpperCase()} query...`, 'bot');
                         await this.showVerificationPanel(result);
                     } else if (result.status === 'completed') {
-                        // READ operation - show results
-                        this.addMessage(`🤔 Analyzed your request...`, 'bot');
-                        this.addMessage(`✅ Detected operation: <strong>${result.intent.toUpperCase()}</strong>`, 'bot');
-                        this.addMessage(`🔧 Generated ${result.intent.toUpperCase()} query...`, 'bot');
-                        this.addMessage(`🔍 Validated ${result.intent.toUpperCase()} query...`, 'bot');
-                        this.addMessage(`⚡ Executed ${result.intent.toUpperCase()} operation...`, 'bot');
-                        this.addMessage(`✅ ${result.intent.toUpperCase()} operation completed`, 'bot');
-                        
                         if (result.final_answer) {
                             this.addMessage(result.final_answer, 'bot');
                         }
@@ -524,8 +500,7 @@
                     }
                 } catch (error) {
                     console.error('API Error:', error);
-                    // Fallback to demo mode if backend is not available
-                    this.addErrorMessage('Backend not available. Please start your FastAPI server.');
+                    throw error;
                 }
             }
             
@@ -611,7 +586,7 @@
             
             async submitVerification(verificationId, approved) {
                 try {
-                    const response = await fetch(`${this.apiBaseUrl}/verify`, {
+                    const response = await fetch('http://backend:8000/verify', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -628,7 +603,6 @@
                     
                     const result = await response.json();
                     
-                    // Show final result
                     if (result.status === 'completed') {
                         if (approved && result.final_answer) {
                             this.addMessage(`⚡ Executing ${result.intent.toUpperCase()} operation...`, 'bot');
@@ -651,7 +625,6 @@
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'message-content';
                 
-                // Convert markdown-style bold to HTML
                 const formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 contentDiv.innerHTML = formattedContent;
                 
@@ -711,7 +684,6 @@
             }
         }
         
-        // Initialize the bot when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             new AgenticCRUDBot();
         });
