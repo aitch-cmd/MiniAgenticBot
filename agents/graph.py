@@ -92,14 +92,29 @@ class AgenticCRUDApp:
                 return DELETE_QUERY_GENERATION_NODE
             return END
 
-        def route_human_verification(state):
-            """Route based on human verification result"""
+        def route_create_verification(state):
+            """Route based on human verification result for CREATE"""
             human_verified = state.get("human_verified")
-            if human_verified == True:
+            if human_verified is True:
                 return EXECUTE_QUERY_CREATE_NODE
-            elif human_verified == False:
+            else:
                 return END
-            return END
+
+        def route_update_verification(state):
+            """Route based on human verification result for UPDATE"""
+            human_verified = state.get("human_verified")
+            if human_verified is True:
+                return EXECUTE_QUERY_UPDATE_NODE
+            else:
+                return END
+
+        def route_delete_verification(state):
+            """Route based on human verification result for DELETE"""
+            human_verified = state.get("human_verified")
+            if human_verified is True:
+                return EXECUTE_QUERY_DELETE_NODE
+            else:
+                return END
 
         # Main routing from reason_and_act_node
         self.graph.add_conditional_edges(REASON_AND_ACT_NODE, route_based_on_intent)
@@ -113,21 +128,21 @@ class AgenticCRUDApp:
         # CREATE flow edges
         self.graph.add_edge(CREATE_QUERY_GENERATION_NODE, CREATE_QUERY_VALIDATION_NODE)
         self.graph.add_edge(CREATE_QUERY_VALIDATION_NODE, CREATE_HUMAN_VERIFICATION_NODE)
-        self.graph.add_conditional_edges(CREATE_HUMAN_VERIFICATION_NODE, route_human_verification)
+        self.graph.add_conditional_edges(CREATE_HUMAN_VERIFICATION_NODE, route_create_verification)
         self.graph.add_edge(EXECUTE_QUERY_CREATE_NODE, CREATE_RESULT_FORMATTING_NODE)
         self.graph.add_edge(CREATE_RESULT_FORMATTING_NODE, END)
 
         # UPDATE flow edges
         self.graph.add_edge(UPDATE_QUERY_GENERATION_NODE, UPDATE_QUERY_VALIDATION_NODE)
         self.graph.add_edge(UPDATE_QUERY_VALIDATION_NODE, UPDATE_HUMAN_VERIFICATION_NODE)
-        self.graph.add_conditional_edges(UPDATE_HUMAN_VERIFICATION_NODE, route_human_verification)
+        self.graph.add_conditional_edges(UPDATE_HUMAN_VERIFICATION_NODE, route_update_verification)
         self.graph.add_edge(EXECUTE_QUERY_UPDATE_NODE, UPDATE_RESULT_FORMATTING_NODE)
         self.graph.add_edge(UPDATE_RESULT_FORMATTING_NODE, END)
 
         # DELETE flow edges
         self.graph.add_edge(DELETE_QUERY_GENERATION_NODE, DELETE_QUERY_VALIDATION_NODE)
         self.graph.add_edge(DELETE_QUERY_VALIDATION_NODE, DELETE_HUMAN_VERIFICATION_NODE)
-        self.graph.add_conditional_edges(DELETE_HUMAN_VERIFICATION_NODE, route_human_verification)
+        self.graph.add_conditional_edges(DELETE_HUMAN_VERIFICATION_NODE, route_delete_verification)
         self.graph.add_edge(EXECUTE_QUERY_DELETE_NODE, DELETE_RESULT_FORMATTING_NODE)
         self.graph.add_edge(DELETE_RESULT_FORMATTING_NODE, END)
 
