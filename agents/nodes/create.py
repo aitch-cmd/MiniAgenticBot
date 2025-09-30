@@ -42,7 +42,7 @@ def execute_query_create_node(state: QueryState) -> QueryState:
         query = strip_sql_code_fences(query)
         results = None
         try:
-            conn = sqlite3.connect("data/app.db")
+            conn = sqlite3.connect("data/apps1.db")
             c = conn.cursor()
             c.execute(query)
             conn.commit()

@@ -170,6 +170,6 @@ class AgenticCRUDApp:
             print("Final Answer:", result.get("answer"))
             print("Validated Query:", result.get("validated_query"))
 
-if __name__ == "__main__":
-    agent_app = AgenticCRUDApp()
-    agent_app.main()
+# if __name__ == "__main__":
+#     agent_app = AgenticCRUDApp()
+#     agent_app.main()

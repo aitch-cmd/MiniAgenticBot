@@ -40,7 +40,7 @@ def execute_query_update_node(state: QueryState) -> QueryState:
         query = query.content if hasattr(query, "content") else str(query)
         query = strip_sql_code_fences(query)
         try:
-            conn = sqlite3.connect("data/app.db")
+            conn = sqlite3.connect("data/apps1.db")
             c = conn.cursor()
             c.execute(query)
             affected = c.rowcount 
