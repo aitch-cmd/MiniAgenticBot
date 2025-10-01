@@ -5,7 +5,9 @@
 A natural language interface for database operations with human-in-the-loop verification for critical operations. Built with LangGraph, FastAPI, and vanilla JavaScript.
 
 **Detailed Documentation**- https://docs.google.com/document/d/1G18ska1G8mPRY0l8XXyWt9mhXYXxTwMILJcrSQgNweE/edit?usp=sharing
-**Demo video** → 14j-a6spF0MNO2ex3DZrT9e3TIIcGtO0b​
+
+**Demo video** → https://drive.google.com/file/d/14j-a6spF0MNO2ex3DZrT9e3TIIcGtO0b/view?usp=sharing
+
 **Graph Architecture Flowchart**→ https://www.figma.com/board/ecYEwxJgvjFnsOTZYmlHLj/DB-Agent?node-id=0-1&t=M9FT7iyH1t4ogV7U-1
 
 ## ✨ Features
