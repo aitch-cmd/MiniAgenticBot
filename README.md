@@ -1,7 +1,5 @@
 # MiniAgenticBot
 
-# 🤖 Agentic CRUD Database Bot
-
 A natural language interface for database operations with human-in-the-loop verification for critical operations. Built with LangGraph, FastAPI, and vanilla JavaScript.
 
 **Detailed Documentation**- https://docs.google.com/document/d/1G18ska1G8mPRY0l8XXyWt9mhXYXxTwMILJcrSQgNweE/edit?usp=sharing
