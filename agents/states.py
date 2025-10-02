@@ -9,4 +9,5 @@ class QueryState(TypedDict):
     results: str | list | None
     answer: str | None
     human_verified: bool | None
+    verification_required: bool
     intermediate_steps: Annotated[list[tuple[str, str]], operator.add]

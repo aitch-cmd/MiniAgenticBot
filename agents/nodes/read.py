@@ -72,7 +72,7 @@ def execute_query_read_node(state: QueryState) -> QueryState:
     
     results = None
     try:
-        conn = sqlite3.connect("data/apps1.db")
+        conn = sqlite3.connect("data/apps.db")
         c = conn.cursor()
         c.execute(query)
         results = c.fetchall()

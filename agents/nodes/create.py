@@ -26,10 +26,18 @@ def create_query_validation_node(state: QueryState) -> QueryState:
     return state
 
 def create_human_verification_node(state: QueryState) -> QueryState:
-    print("Do you approve the following CREATE operation?\n", state["validated_query"])
-    response = input("Approve? (yes/no): ")  
-    state["human_verified"] = response.strip().lower() == "yes"
-    state["intermediate_steps"].append(("human_verification", str(state["human_verified"])))
+    # If human_verified is already set (from frontend), skip prompt logic
+    if state.get("human_verified") is not None:
+        # Approval has already been given by frontend, just document it
+        state["verification_required"] = False  # Clear the flag since approval is handled
+        state["intermediate_steps"].append(
+            ("human_verification", str(state["human_verified"]))
+        )
+        return state
+
+    state["verification_required"] = True
+    state["human_verified"] = None  # Not yet approved or declined
+    state["intermediate_steps"].append(("human_verification", "pending"))
     return state
 
 def execute_query_create_node(state: QueryState) -> QueryState:
@@ -42,7 +50,7 @@ def execute_query_create_node(state: QueryState) -> QueryState:
         query = strip_sql_code_fences(query)
         results = None
         try:
-            conn = sqlite3.connect("data/apps1.db")
+            conn = sqlite3.connect("data/apps.db")
             c = conn.cursor()
             c.execute(query)
             conn.commit()

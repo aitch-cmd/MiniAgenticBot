@@ -7,7 +7,7 @@ import random
 os.makedirs("data", exist_ok=True)
 
 # Connect to database
-conn = sqlite3.connect("data/apps1.db")
+conn = sqlite3.connect("data/apps.db")
 c = conn.cursor()
 
 RESET_DATABASE = True 

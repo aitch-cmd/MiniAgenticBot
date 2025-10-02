@@ -146,16 +146,17 @@ class AgenticCRUDApp:
         self.graph.add_edge(EXECUTE_QUERY_DELETE_NODE, DELETE_RESULT_FORMATTING_NODE)
         self.graph.add_edge(DELETE_RESULT_FORMATTING_NODE, END)
 
-    def run_agent(self, input: str) -> dict:
-        # Accepts a user input and runs the entire workflow
+    def run_agent(self, input_data: dict) -> dict:
+        # Accepts initial state dict and runs the entire workflow
         state = {
-            "input": input,
+            "input": input_data.get("input"),
             "intent": None,
             "query": None,
             "validated_query": None,
             "results": None,
             "answer": None,
-            "human_verified": None,
+            "human_verified": input_data.get("human_verified"),
+            "verification_required": False,
             "intermediate_steps": []
         }
         result = self.app.invoke(state)
