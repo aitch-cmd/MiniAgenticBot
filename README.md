@@ -73,30 +73,19 @@ Open `templates/index.html` in your browser or run:
 
 ## Docker Deployment  
 
-### Building Images  
+### Run with Docker Compose
 
-#### Backend  
-``` docker build -t my-backend -f Dockerfile.backend .```
+Make sure you have **Docker** and **Docker Compose** installed.  
+From the project root, run:
+``` docker compose up --build ```
 
-text
-
-#### Frontend  
-``` docker build -t my-frontend -f Dockerfile.frontend .```
-
-### Running Containers  
-
-#### Backend  
-``` docker run --name testing_backend_container -p 8000:8000 my-backend ```
-
-#### Frontend  
-``` docker run --name testing_frontend_container -p 80:80 my-frontend ```
-
-### Using Docker Compose  
-```docker compose up --build ```
-
-⚠️ Note: Human approval currently requires terminal input, which is not supported in Docker runtime.  
-Use **Development Mode** for full CRUD functionality. 
-
+This will:
+- Build **backend** and **frontend** images.
+- Create a shared **app-network**.
+- Start containers:
+  - **crud-backend** on port `8000` (with ./data volume).
+  - **crud-frontend** on port `80`.
+- Restart services automatically unless stopped.
 
 ## 📁 Project Structure
 
