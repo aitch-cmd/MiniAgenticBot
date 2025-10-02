@@ -6,13 +6,15 @@ services:
     container_name: crud-backend
     ports:
       - "8000:8000"
+    volumes:
+      - ./data:/app/data
     networks:
       - app-network
     restart: unless-stopped
 
   frontend:
     build:
-      context: .  # root folder
+      context: .  
       dockerfile: Dockerfile.frontend
     container_name: crud-frontend
     ports:
