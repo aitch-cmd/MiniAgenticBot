@@ -113,7 +113,7 @@ agentic-crud-bot/
 └── README.md
 ```
 
-### 3. Example queries
+### Example queries
 
 **Read Operations** (No approval required):
 - "Show me all users"
