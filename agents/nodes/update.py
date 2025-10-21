@@ -1,12 +1,12 @@
 import sqlite3
 from agents.states import QueryState
 from core.llm import llm
-from core.prompts import update_query_generation_prompt, update_query_validation_prompt, update_result_formatting_prompt
+from core.prompts import update_query_generation_prompt, update_query_validation_prompt, update_result_formatting_prompt, schema
 from agents.nodes.read import strip_sql_code_fences
 
 def update_query_generation_node(state: QueryState) -> QueryState:
     input_text = state.get("input")
-    generated_query = llm.invoke(update_query_generation_prompt.format(input=input_text))
+    generated_query = llm.invoke(update_query_generation_prompt.format(input=input_text, schema=schema))
     query = generated_query.content if hasattr(generated_query, 'content') else str(generated_query)
     state["query"] = query
     intermediate = state.get("intermediate_steps", [])
@@ -17,7 +17,7 @@ def update_query_generation_node(state: QueryState) -> QueryState:
 def update_query_validation_node(state: QueryState) -> QueryState:
     query = state.get("query")
     input_text = state.get('input')
-    validated_query = llm.invoke(update_query_validation_prompt.format(input=input_text, query=query))
+    validated_query = llm.invoke(update_query_validation_prompt.format(input=input_text, query=query, schema=schema))
     validated_query_str = validated_query.content if hasattr(validated_query, 'content') else str(validated_query)
     state["validated_query"] = validated_query_str
     intermediate = state.get("intermediate_steps", [])

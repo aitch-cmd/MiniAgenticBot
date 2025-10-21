@@ -1,5 +1,11 @@
 from langchain.prompts import PromptTemplate
 
+schema="""
+users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
+products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
+orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+"""
+
 intent_classification_prompt = PromptTemplate.from_template("""
 Given the following user request, classify the intended database operation as one of the following:
 - "read" (query existing data)
@@ -15,11 +21,8 @@ Respond only with one word: read, create, update, or delete.
 read_query_generation_prompt = PromptTemplate.from_template("""
 You are an expert SQL developer.
 Given the following SQLite database schema and a natural language question, generate a syntactically valid SQL query that answers the question.
-
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+{schema}
 
 Only use the tables and columns that appear in the schema above.
 Avoid making assumptions about table or column names.
@@ -47,9 +50,7 @@ If you spot an issue, rewrite the query so it is valid for the schema and dialec
 Do not return explanations—just the validated query.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+{schema}
 
 Dialect: SQLite
 
@@ -82,9 +83,7 @@ You are an expert SQL developer.
 Given the following SQLite database schema and a natural language request, generate a syntactically valid SQL INSERT query that adds a new row into the appropriate table.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+{schema}
 
 Instructions:
 - Only use the tables and columns that appear in the schema above.
@@ -120,9 +119,7 @@ If you spot an issue, rewrite the query so it is valid for the schema and dialec
 Do not return explanations—just the validated query.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+{schema}
 
 Dialect: SQLite
 
@@ -151,9 +148,7 @@ You are an expert SQL developer.
 Given the following SQLite database schema and a natural language request, generate a syntactically valid SQL UPDATE query to modify existing data in the appropriate table.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id))
+{schema}
 
 Instructions:
 - Only use the tables and columns listed in the schema above.
@@ -190,9 +185,7 @@ If you spot an issue, rewrite the query so it is valid for the schema and dialec
 Do not return explanations—just the validated query.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+{schema}
 
 Dialect: SQLite
 
@@ -221,9 +214,7 @@ You are an expert SQL developer.
 Given the following SQLite database schema and a natural language request from the user, generate a syntactically valid SQL DELETE query to remove data from the correct table.
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+{schema}
 
 Instructions:
 - Only use the tables and columns given above.
@@ -265,9 +256,7 @@ Context:
 User request: {input}
 
 Schema:
-users(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, is_active INTEGER NOT NULL, created_at TEXT NOT NULL)
-products(id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, category TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL)
-orders(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL, order_status TEXT NOT NULL, order_date TEXT NOT NULL, FOREIGN KEY(user_id) REFERENCES users(id), FOREIGN KEY(product_id) REFERENCES products(id)
+{schema}
 
 Original SQL Query:
 {query}

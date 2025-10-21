@@ -1,7 +1,7 @@
 import sqlite3
 from agents.states import QueryState
 from core.llm import llm
-from core.prompts import intent_classification_prompt, read_query_generation_prompt, read_query_validation_prompt, read_result_formatting_prompt
+from core.prompts import intent_classification_prompt, read_query_generation_prompt, read_query_validation_prompt, read_result_formatting_prompt, schema
 
 def reason_and_act_node(state: QueryState) -> QueryState:
     user_input = state.get("input")
@@ -19,7 +19,7 @@ def reason_and_act_node(state: QueryState) -> QueryState:
 def read_query_generation_node(state: QueryState) -> QueryState:
     # Get the user input
     input_text = state.get('input')
-    sql_query = llm.invoke(read_query_generation_prompt.format(input=input_text))
+    sql_query = llm.invoke(read_query_generation_prompt.format(input=input_text, schema=schema))
     # Update state
     state["query"] = sql_query
     intermediate = state.get('intermediate_steps', [])
@@ -30,7 +30,7 @@ def read_query_generation_node(state: QueryState) -> QueryState:
 def read_query_validation_node(state: QueryState) -> QueryState:
     query = state.get('query')
     input_text = state.get('input')
-    validated_query_obj = llm.invoke(read_query_validation_prompt.format(input=input_text, query=query))
+    validated_query_obj = llm.invoke(read_query_validation_prompt.format(input=input_text, query=query, schema=schema))
     # Extract raw string
     validated_query = (
         validated_query_obj.content if hasattr(validated_query_obj, "content") else validated_query_obj
