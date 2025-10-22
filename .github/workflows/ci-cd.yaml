@@ -36,7 +36,7 @@ jobs:
           echo "Backend  -> $BACKEND_TAG"
 
           # Build both images
-          docker compose -f docker-compose.yaml build
+          docker compose up --build
 
           # Tag them as 'latest'
           docker tag frontend:latest $FRONTEND_TAG
