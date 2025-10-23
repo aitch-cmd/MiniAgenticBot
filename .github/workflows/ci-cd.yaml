@@ -37,16 +37,15 @@ jobs:
           echo "Frontend -> $FRONTEND_TAG"
           echo "Backend  -> $BACKEND_TAG"
 
-          # Build both images
-          docker compose up --build
+          # Build both images WITHOUT starting containers
+          docker compose build
 
-          # Tag them as 'latest'
-          docker tag frontend:latest $FRONTEND_TAG
-          docker tag backend:latest $BACKEND_TAG
+          # Tag the images with ACR repository names
+          docker tag miniagenticbot-frontend:latest $FRONTEND_TAG
+          docker tag miniagenticbot-backend:latest $BACKEND_TAG
 
           # Push both to ACR
           docker push $FRONTEND_TAG
           docker push $BACKEND_TAG
 
           echo "Successfully pushed latest frontend and backend images to ACR!"
-
