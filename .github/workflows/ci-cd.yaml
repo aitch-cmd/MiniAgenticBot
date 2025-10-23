@@ -1,4 +1,4 @@
-name: Build and Push Latest Frontend + Backend Images to ACR
+name: CI/CD Pipeline – Frontend & Backend to AKS
 
 on:
   push:
@@ -49,3 +49,16 @@ jobs:
           docker push $BACKEND_TAG
 
           echo "Successfully pushed latest frontend and backend images to ACR!"
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Get AKS credentials
+        run: az aks get-credentials --resource-group miniagent --name aks_db --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl rollout restart deployment backend-deployment
+          kubectl rollout restart deployment frontend-deployment
